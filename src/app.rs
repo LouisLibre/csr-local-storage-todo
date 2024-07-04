@@ -36,21 +36,21 @@ pub struct Todo {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Serialize, Deserialize)]
-pub struct ProntoState {
+pub struct AppState {
     pub uncommitted_todo: String,
     pub todos: Vec<Todo>,
 }
 
-const STORAGE_KEY: &str = "pronto-todo";
+const STORAGE_KEY: &str = "app-state";
 
-impl Default for ProntoState {
+impl Default for AppState {
     fn default() -> Self {
         let starting_todos = window().local_storage().ok().flatten().and_then(|storage| {
             storage
                 .get_item(STORAGE_KEY)
                 .ok()
                 .flatten()
-                .and_then(|value| serde_json::from_str::<ProntoState>(&value).ok())
+                .and_then(|value| serde_json::from_str::<AppState>(&value).ok())
         });
 
         match starting_todos {
@@ -58,7 +58,7 @@ impl Default for ProntoState {
                 logging::log!("starting_todos: {:?}", todos);
                 todos
             }
-            None => ProntoState {
+            None => AppState {
                 uncommitted_todo: String::new(),
                 todos: Vec::<Todo>::new(),
             },
@@ -68,7 +68,7 @@ impl Default for ProntoState {
 
 #[component]
 fn HomePage() -> impl IntoView {
-    let app_state = create_rw_signal(ProntoState::default());
+    let app_state = create_rw_signal(AppState::default());
 
     let (uncommitted_todo, set_uncommitted_todo) = create_slice(
         app_state,
@@ -90,7 +90,7 @@ fn HomePage() -> impl IntoView {
 
     let save_to_local_storage = move || {
         if let Ok(Some(storage)) = window().local_storage() {
-            let state = ProntoState {
+            let state = AppState {
                 uncommitted_todo: app_state.get().uncommitted_todo.clone(),
                 todos: app_state.get().todos.clone(),
             };
